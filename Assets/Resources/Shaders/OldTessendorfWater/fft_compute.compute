@@ -1,0 +1,144 @@
+#pragma kernel fft
+
+RWTexture2D<float4> spectrum;
+RWTexture2D<float4> back_to_back_l;
+RWTexture2D<float4> back_to_back_r;
+Texture2D butterfly_texture;
+sampler2D butterfly_sampler;
+
+cbuffer Params
+{
+    int stage_num;
+    int back_to_back;
+    int direction;
+}
+
+// complex
+struct complex
+{
+    float real;
+    float im;
+};
+
+complex complex_mul(complex l, complex r) {
+    complex c;
+    c.real = l.real * r.real - l.im * r.im;
+    c.im = l.real * r.im - l.im * r.real;
+    return c;
+}
+
+complex complex_add(complex l, complex r) {
+    complex c;
+    c.real = l.real + r.real;
+    c.im = l.im + r.im;
+    return c;
+}
+
+complex complex_conj(complex l) {
+    complex c;
+    c.real = l.real;
+    c.im = -l.im;
+    return c;
+}
+
+void horizontal_butterflies(uint3 id) {
+    // Используется l текстура
+    if (back_to_back == 0) {
+        // Получение данных из текстуры операции "бабочки"
+        float4 data = butterfly_texture.SampleLevel(
+            butterfly_sampler, float2(stage_num, id.x), 0
+        ).rgba;
+        // Получение данных из входной
+        // текстуры спектральных компонент Фурье
+        float2 p_spec = spectrum[uint3(data.z, id.y, 0)].rg;
+        float2 q_spec = spectrum[uint3(data.w, id.y, 0)].rg;
+
+        // Задание мнимых значений для переменных
+        complex p, q, w;
+        p.real = p_spec.x; p.im = p_spec.y;
+        q.real = q_spec.x; q.im = q_spec.y;
+        w.real = data.x;   w.im = data.y;
+
+        // Применение операции "бабочки"
+        complex h_complex = complex_add(p, complex_mul(w, q));
+        back_to_back_r[uint3(id.xy, 0)] = float4(h_complex.real, h_complex.im, 0, 1);
+    }
+    // Используется r текстура
+    else if (back_to_back == 1) {
+        // Получение данных из текстуры операции "бабочки"
+        float4 data = butterfly_texture.SampleLevel(
+            butterfly_sampler, float2(stage_num, id.x), 0
+        ).rgba;
+        // Получение данных из входной
+        // текстуры спектральных компонент Фурье
+        float2 p_spec = spectrum[uint3(data.z, id.y, 0)].rg;
+        float2 q_spec = spectrum[uint3(data.w, id.y, 0)].rg;
+
+        // Задание мнимых значений для переменных
+        complex p, q, w;
+        p.real = p_spec.x; p.im = p_spec.y;
+        q.real = q_spec.x; q.im = q_spec.y;
+        w.real = data.x;   w.im = data.y;
+
+        // Применение операции "бабочки"
+        complex h_complex = complex_add(p, complex_mul(w, q));
+        back_to_back_l[uint3(id.xy, 0)] = float4(h_complex.real, h_complex.im, 0, 1);
+    }
+}
+
+void vertical_butterflies(uint3 id) {
+    // Используется l текстура
+    if (back_to_back == 0)
+    {
+        // Получение данных из текстуры операции "бабочки"
+        float4 data = butterfly_texture.SampleLevel(
+            butterfly_sampler, float2(stage_num, id.y), 0
+        ).rgba;
+        // Получение данных из входной
+        // текстуры спектральных компонент Фурье
+        float2 p_spec = spectrum[uint3(id.x, data.z, 0)].rg;
+        float2 q_spec = spectrum[uint3(id.x, data.w, 0)].rg;
+
+        // Задание мнимых значений для переменных
+        complex p, q, w;
+        p.real = p_spec.x; p.im = p_spec.y;
+        q.real = q_spec.x; q.im = q_spec.y;
+        w.real = data.x;   w.im = data.y;
+
+        // Применение операции "бабочки"
+        complex h_complex = complex_add(p, complex_mul(w, q));
+        back_to_back_l[uint3(id.xy, 0)] = float4(h_complex.real, h_complex.im, 0, 1);
+    }
+    // Используется r текстура
+    else if (back_to_back == 1)
+    {
+        // Получение данных из текстуры операции "бабочки"
+        float4 data = butterfly_texture.SampleLevel(
+            butterfly_sampler, float2(stage_num, id.y), 0
+        ).rgba;
+        // Получение данных из входной
+        // текстуры спектральных компонент Фурье
+        float2 p_spec = spectrum[uint3(id.x, data.z, 0)].rg;
+        float2 q_spec = spectrum[uint3(id.x, data.w, 0)].rg;
+
+        // Задание мнимых значений для переменных
+        complex p, q, w;
+        p.real = p_spec.x; p.im = p_spec.y;
+        q.real = q_spec.x; q.im = q_spec.y;
+        w.real = data.x;   w.im = data.y;
+
+        // Применение операции "бабочки"
+        complex h_complex = complex_add(p, complex_mul(w, q));
+        back_to_back_r[uint3(id.xy, 0)] = float4(h_complex.real, h_complex.im, 0, 1);
+    }
+}
+
+[numthreads(8,1,1)]
+void fft(uint3 id : SV_DispatchThreadID) {
+    if (direction == 0) {
+        horizontal_butterflies(id);
+    }
+    else if (direction == 1) {
+        vertical_butterflies(id);
+    } 
+}

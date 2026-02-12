@@ -1,0 +1,63 @@
+#pragma kernel calculate_amplitudes
+
+cbuffer params
+{
+    float time;
+}
+
+RWTexture2DArray<float4> result;
+
+Texture2DArray h0;
+// xz вектор волны
+Texture2DArray waves_data;
+
+float2 complex_mult(float2 a, float2 b) {
+    return float2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.y);
+}
+
+void calculate_amplitudes_and_derivatives(uint3 id) {
+    float4 wave = waves_data[id];
+    float phase = wave.w * time;
+    float2 exponent = float2(cos(phase), sin(phase));
+    float4 h0_data = h0[id];
+    float2 h  = complex_mult(h0_data.xy, exponent) + complex_mult(h0_data.zw, float2(exponent.x, -exponent.y));
+    float2 ih = float2(-h.y, h.x);
+
+    // Получение значений сдвига
+    float one_over_k_length = 1 / max(.001, length(wave.xz));
+    float2 displacement_x = ih * wave.x * one_over_k_length;
+    float2 displacement_y = h;
+    float2 displacement_z = ih * wave.x * one_over_k_length;
+
+    // частные производные по координатам x y z
+    float2 displacement_x_dx = - h * wave.x * wave.x * one_over_k_length;
+    float2 displacement_y_dx = ih * wave.x;
+    float2 displacement_z_dx = - h * wave.x * wave.z * one_over_k_length;
+
+    // вторые частные производные по координате z
+    float2 displacement_y_dz = ih * wave.z;
+    float2 displacement_z_dz = - h * wave.z * wave.z * one_over_k_length;
+
+    // запись выходных данных в текстуру
+    result[uint3(id.xy, id.z * 2)] =
+        float4(
+            // запись данных о сдвиге
+            float2(displacement_x.x - displacement_y.y, displacement_x.y + displacement_y.x),
+            // запись данных о производной по x
+            float2(displacement_z.x - displacement_z_dx.y, displacement_z.y + displacement_z_dx.x)
+        );
+    result[uint3(id.xy, id.z * 2 + 1)] =
+        float4(
+            // запись данных о производной по y
+            float2(displacement_y_dx.x - displacement_y_dz.y, displacement_y_dx.y + displacement_y_dz.x),
+            // запись данных о производной по z
+            float2(displacement_x_dx.x - displacement_z_dz.y, displacement_x_dx.y + displacement_z_dz.x)
+        );
+}
+
+// Функция для вычисления амплитуд и производных
+[numthreads(8,8,1)]
+void calculate_amplitudes (uint3 id : SV_DispatchThreadID)
+{
+    calculate_amplitudes_and_derivatives(id);
+}

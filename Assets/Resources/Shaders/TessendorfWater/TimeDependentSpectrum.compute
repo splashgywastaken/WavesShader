@@ -1,0 +1,53 @@
+#pragma kernel TimeDependentSpectrum
+
+// ins
+// R - real, G - im
+RWTexture2D<float2> H0;
+Texture2D WaveVectorTex;
+
+// params
+uint N;
+float g;
+float time;
+
+// outs
+// R - real, G - im
+RWTexture2D<float2> Ht;
+
+float Dispersion(float2 k)
+{
+    return sqrt(g * length(k));
+}
+
+float2 ComplexMult(float2 a, float2 b)
+{
+    return float2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+[numthreads(8,8,1)]
+void TimeDependentSpectrum (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= N || id.y >= N) return;
+
+    int n = id.x;
+    int m = id.y;
+    int2 uv = int2(n, m);
+
+    float2 k = WaveVectorTex[uv].xy;
+
+    float2 h0k = H0[uv];
+    int in_kx = (N - n) % N;
+    int in_ky = (N - m) % N;
+    float2 h0mk = H0[int2(in_kx, in_ky)];
+
+    float w = Dispersion(k);
+    float cos_wt = cos(w * time);
+    float sin_wt = sin(w * time);
+    float2 exp_iwt = float2(cos_wt, sin_wt);
+    float2 exp_neg = float2(cos_wt, -sin_wt);
+
+    float2 conj_h0mk = float2(h0mk.x, -h0mk.y);
+    float2 complex_sum = ComplexMult(h0k, exp_iwt) + ComplexMult(conj_h0mk, exp_neg);
+        
+    Ht[uv] = float2(complex_sum.x, complex_sum.y);
+}

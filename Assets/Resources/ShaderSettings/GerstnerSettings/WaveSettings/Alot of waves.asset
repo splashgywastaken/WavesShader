@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2899257bd3dd35448b5dfd7f3396a548, type: 3}
+  m_Name: Alot of waves
+  m_EditorClassIdentifier: 
+  waveSettings:
+  - steepness: 0.2
+    wavelength: 16
+    waveRotationAngle: 0
+  - steepness: 0.3
+    wavelength: 10
+    waveRotationAngle: 152
+  - steepness: 0.7
+    wavelength: 32
+    waveRotationAngle: 258
+  - steepness: 0.7
+    wavelength: 100
+    waveRotationAngle: 228
+  - steepness: 0.56
+    wavelength: 96
+    waveRotationAngle: 0
+  - steepness: 0.6
+    wavelength: 72
+    waveRotationAngle: 0
+  - steepness: 0.4
+    wavelength: 128
+    waveRotationAngle: 0
+  - steepness: 0.4
+    wavelength: 60
+    waveRotationAngle: 0
+  - steepness: 0.5
+    wavelength: 80
+    waveRotationAngle: 0
+  - steepness: 0.3
+    wavelength: 30
+    waveRotationAngle: 0
+  - steepness: 0.3
+    wavelength: 30
+    waveRotationAngle: 0
+  - steepness: 0.2
+    wavelength: 38
+    waveRotationAngle: 220
+  - steepness: 0.52
+    wavelength: 52
+    waveRotationAngle: 202
+  - steepness: 0.2
+    wavelength: 10
+    waveRotationAngle: 0
+  - steepness: 0.52
+    wavelength: 24
+    waveRotationAngle: 220
+  - steepness: 0.33
+    wavelength: 22
+    waveRotationAngle: 240
+  - steepness: 0.44
+    wavelength: 26
+    waveRotationAngle: 0
+  - steepness: 0.5
+    wavelength: 31
+    waveRotationAngle: 0
+  - steepness: 0.27
+    wavelength: 18
+    waveRotationAngle: 0
+  - steepness: 0.47
+    wavelength: 38
+    waveRotationAngle: 0
+  - steepness: 0.24
+    wavelength: 16
+    waveRotationAngle: 0
+  - steepness: 0.18
+    wavelength: 12
+    waveRotationAngle: 0
+  - steepness: 0.26
+    wavelength: 15
+    waveRotationAngle: 0
+  - steepness: 0.31
+    wavelength: 15
+    waveRotationAngle: 0
+  - steepness: 0.29
+    wavelength: 12
+    waveRotationAngle: 0
+  - steepness: 0.27
+    wavelength: 15
+    waveRotationAngle: 0
+  - steepness: 0.24
+    wavelength: 22
+    waveRotationAngle: 0
+  - steepness: 0.3
+    wavelength: 16
+    waveRotationAngle: 0
+  - steepness: 0.4
+    wavelength: 18
+    waveRotationAngle: 0
+  - steepness: 0.5
+    wavelength: 40
+    waveRotationAngle: 0
+  - steepness: 0.4
+    wavelength: 34
+    waveRotationAngle: 0

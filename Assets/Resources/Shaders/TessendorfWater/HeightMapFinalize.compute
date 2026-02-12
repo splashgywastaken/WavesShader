@@ -1,0 +1,26 @@
+#pragma kernel HeightMapFinalize
+
+// ins
+Texture2D<float2> SpatialH;
+Texture2D<float2> SpatialHx;
+Texture2D<float2> SpatialHy;
+
+// outs
+RWTexture2D<float4> HeightMapAndDerivatives;
+
+uint N;
+
+[numthreads(8,8,1)]
+void HeightMapFinalize (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= N || id.y >= N) return;
+
+    int2 uv = int2(id.x, id.y);
+    float norm = 1.0 / (N * N);
+
+    float2 h = SpatialH[uv];
+    float2 hx = SpatialHx[uv];
+    float2 hy = SpatialHy[uv];
+    
+    HeightMapAndDerivatives[uv] = float4(h.x * norm, hx.x * norm, hy.x * norm, 0);
+}

@@ -1,0 +1,24 @@
+#pragma kernel PrecomputeWaveVectors
+#include "UnityCG.cginc"
+
+// R - kx, G - ky, B - k_len, A - mod(k) == 0 : 0 ? 1 / mod(k)^2 
+RWTexture2D<float4> WaveVectorTex;
+
+uint N;
+uint L;
+
+[numthreads(8,8,1)]
+void PrecomputeWaveVectors (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= N || id.y >= N) return;
+
+    uint n = id.x;
+    uint m = id.y;
+
+    float k_x = (-1 * (N/2) + n) * (2.0 * UNITY_PI / L);
+    float k_y = (-1 * (N/2) + m) * (2.0 * UNITY_PI / L);
+    float k_len = length(float2(k_x, k_y));
+    float inv_k2 = k_len > 1e-6 ? 1.0 / (k_len * k_len) : 0.0;
+
+    WaveVectorTex[int2(n, m)] = float4(k_x, k_y, k_len, inv_k2);
+}

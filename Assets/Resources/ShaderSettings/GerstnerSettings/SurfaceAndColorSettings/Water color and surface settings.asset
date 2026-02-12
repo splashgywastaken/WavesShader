@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 24289ba626c6bf94bb3ae69fa607cec9, type: 3}
+  m_Name: Water color and surface settings
+  m_EditorClassIdentifier: 
+  deepWaterColor: {r: 0.18431373, g: 0.6039216, b: 0.5873223, a: 0.94509804}
+  mainColor: {r: 0.1490196, g: 0.34851825, b: 0.5568628, a: 0.5176471}
+  smoothness: 0.2
+  metallic: 0.8

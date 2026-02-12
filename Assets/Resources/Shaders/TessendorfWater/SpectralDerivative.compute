@@ -1,0 +1,28 @@
+#pragma kernel SpectralDerivative
+
+// ins
+RWTexture2D<float2> Ht;
+Texture2D WaveVectorTexture;
+// outs
+RWTexture2D<float2> Hx_k;
+RWTexture2D<float2> Hy_k;
+
+uint N; 
+
+[numthreads(8,8,1)]
+void SpectralDerivative (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= N || id.y >= N) return;
+
+    int n = id.x;
+    int m = id.y;
+    int2 uv = int2(n, m);
+
+    float2 h = Ht[uv];
+    float2 i_h = float2(-h.y, h.x);
+
+    float4 wave_vector = WaveVectorTexture[uv];
+    
+    Hx_k[uv] = i_h * wave_vector.x;
+    Hy_k[uv] = i_h * wave_vector.y;
+}

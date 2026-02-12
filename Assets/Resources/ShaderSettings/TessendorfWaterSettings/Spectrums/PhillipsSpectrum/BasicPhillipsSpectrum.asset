@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0738ff17585b936419725a709dc678e3, type: 3}
+  m_Name: BasicPhillipsSpectrum
+  m_EditorClassIdentifier: 
+  size: 4096
+  worldSpaceSize: 2000
+  amplitude: 15
+  windDirectionAngle: -87
+  windSpeed: 4
+  twiddleFactorPower: 15
+  windAlignmentPower: 1
+  spectralExponent: 0.716
+  gravity: 9.81
+  updateSpectrumConstantly: 1

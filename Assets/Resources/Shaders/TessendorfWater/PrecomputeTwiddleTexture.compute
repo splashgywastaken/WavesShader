@@ -1,0 +1,36 @@
+#pragma kernel PrecomputeTwiddleTexture
+#include "UnityCG.cginc"
+
+// ins
+uint N;
+
+// outs
+RWTexture2D<float2> twiddleTexture;
+
+[numthreads(8,8,1)]
+void PrecomputeTwiddleTexture (uint3 id : SV_DispatchThreadID)
+{
+    uint h = log(N);
+    uint w = N / 2;
+
+    if (id.x >= w || id.y >= h)
+        return;
+    
+    for (uint s = 0; s < h; s++)
+    {
+        uint m = 1 << (s + 1);
+        uint m_half = m / 2;
+        for (uint k = 0; k < w; k++)
+        {
+            float cos_v = 1.0f;
+            float sin_v = 0.0f;
+            if (k < m_half)
+            {
+                float angle = -2.0f * UNITY_PI * k / m;
+                cos_v = cos(angle);
+                sin_v = sin(angle);
+            }
+            twiddleTexture[int2(k, s)] = float2(cos_v, sin_v);
+        }
+    }
+}

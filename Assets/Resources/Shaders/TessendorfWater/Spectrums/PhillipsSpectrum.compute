@@ -1,0 +1,131 @@
+#pragma kernel PhillipsSpectrum
+
+#include "UnityCG.cginc"
+
+// ins
+Texture2D WaveVectorTex;
+
+// params
+uint N;
+int twiddleFactor;
+float g;
+float amplitude;
+float windAlignmentPower;
+float spectralExponent;
+float2 windDir;
+float windSpeed;
+
+// outs
+RWTexture2D<float2> H0; // выходная текстура: R=Re, G=Im
+
+float2 Hash21(uint seed)
+{
+    seed ^= (seed << 13);
+    seed ^= (seed >> 17);
+    seed ^= (seed << 5);
+
+    float x = frac(sin(seed * 12.9898f) * 43758.5453f);
+    float y = frac(sin(seed * 78.233f) * 12345.6789f);
+    return float2(x, y);
+}
+
+// Быстрый псевдослучайный генератор на uint
+uint Hash(uint n)
+{
+    n ^= n << 13;
+    n ^= n >> 17;
+    n ^= n << 5;
+    return n;
+}
+
+// Возвращает равномерное случайное число [0,1)
+float RandomFloat(uint seed)
+{
+    return (Hash(seed) & 0x00FFFFFF) / 16777216.0;
+}
+
+// Генерация значения с нормальным распределением [0,1]
+float Normal01(uint2 id, uint seed, float mean, float sigma)
+{
+    // два равномерных значения (0,1]
+    float u1 = max(RandomFloat(Hash(id.x + seed)), 1e-6);
+    float u2 = RandomFloat(Hash(id.y + seed * 31u));
+
+    // Box–Muller: стандартное нормальное распределение N(0,1)
+    float r = sqrt(-2.0 * log(u1));
+    float theta = 6.2831853 * u2; // 2πu2
+    float z = r * cos(theta);
+
+    // Смещаем к mean и масштабируем по sigma
+    float val = mean + z * sigma;
+
+    // Обрезаем в [0,1]
+    return saturate(val);
+}
+
+float2 BoxMuller(float2 uv)
+{
+    // sqrt(-2ln(r))
+    float right = sqrt(-2.0 * log(max(uv.x, 1e-6)));
+    // 2 * pi * theta
+    float left = 2.0 * UNITY_PI * uv.y;
+    return float2(cos(left), sin(left) * right);
+}
+
+float Phillips(float2 k, float k_length)
+{
+    if (k_length < 1e-6f) return 0.0f;
+
+    float k2 = k_length * k_length;
+    float k4 = k2 * k2;
+
+    float l_p = windSpeed * windSpeed / g;
+    float2 k_dir = normalize(k);
+    float k_dot_w = dot(k_dir, normalize(windDir));
+    // убираем отрицательные (обратные направлению ветра) — это типично
+    float k_dot_w_pos = max(0.0, k_dot_w);
+
+    // усиление вдоль ветра: (kDotWPos)^(2 * twiddlePower)
+    float alignment = pow(k_dot_w_pos, windAlignmentPower);
+    
+    float base_p = amplitude * exp(-1.0f / (k2 * l_p * l_p)) / k4 * (k_dot_w * k_dot_w);
+
+    // применяем alignment и спектральную степень
+    float result_p = base_p * alignment;
+
+    if (spectralExponent != 1.0f)
+        result_p = pow(max(0.0f, result_p), spectralExponent);
+
+    return result_p;
+}
+
+[numthreads(8,8,1)]
+void PhillipsSpectrum(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= N || id.y >= N) return;
+
+    uint n = id.x;
+    uint m = id.y;
+    uint2 n_m = int2(n, m);
+
+    float4 wave_vector = WaveVectorTex[n_m];
+    float2 k = wave_vector.xy;
+    float k_length = wave_vector.z;
+    float p = Phillips(k, k_length);
+
+    if (p == 0)
+    {
+        H0[int2(n, m)] = float2(0, 0);
+        return;
+    }
+
+    uint seed = (uint)(n + m * N) * 1664525u;
+    float hash = Normal01(id, seed, 0.5, 0.15);
+    float2 rnd = float2(hash, hash);
+    float2 gauss = BoxMuller(rnd);
+
+    float scale = sqrt(p / 2.0);
+    float2 h0 = gauss * (scale * 0.70710678f);
+
+    H0[int2(n, m)] = float2(h0.x, h0.y);
+}

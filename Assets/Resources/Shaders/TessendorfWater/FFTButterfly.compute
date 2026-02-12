@@ -1,0 +1,112 @@
+#pragma kernel FFT_Horizontal
+#pragma kernel FFT_Vertical
+
+// Ins
+// InputA = Ht_k, InputB = Hx_k, InputC = Hy_k
+RWTexture2D<float2> InputA;
+RWTexture2D<float2> InputB;
+RWTexture2D<float2> InputC;
+
+// Outs
+RWTexture2D<float2> OutputA;
+RWTexture2D<float2> OutputB;
+RWTexture2D<float2> OutputC;
+
+// Twiddle texture: size (N/2, logN) stored as RGFloat: (cos, sin) for a given stage and k
+Texture2D<float2> TwiddleTex;
+
+uint N;
+uint stage;
+int direction; // 1 - FFT, -1 - IFFT
+
+float2 ComplexMult(float2 a, float2 b)
+{
+    return float2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
+}
+
+[numthreads(8,8,1)]
+void FFT_Horizontal (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= N || id.y >= N) return;
+
+    uint n = id.x;
+    uint m = id.y;
+
+    uint step = 1 << stage;      // 2^stage
+    uint jump = step << 1;       // 2^(stage+1)
+    uint group = n / jump;
+    uint pair_index = n % step;   // 0...step-1
+
+    int i1 = group * jump + pair_index;
+    int i2 = i1 + step;
+
+    int2 n_m = int2(n, m);
+    int2 i1_m_uv = int2(i1, m);
+    int2 i2_m_uv = int2(i2, m);
+    
+    // twiddle k index: pairIndex * (N / (2*step)) ? For Stockham we need twiddle for pairIndex.
+    // For our precompute we stored twiddles for k=0...(step-1) for each stage in TwiddleTex.
+    // twiddle read coords: (pairIndex, stage)
+    float2 tw = TwiddleTex.Load(int3(pair_index, stage, 0));
+    // if direction == -1 (IFFT) we need conjugate twiddle (cos, -sin)
+    if (direction == -1) tw.y = -tw.y;
+
+    // Compute with twiddle for A
+    float2 a_a = InputA[i1_m_uv];
+    float2 b_a = InputA[i2_m_uv];
+    float2 t_a = ComplexMult(b_a, tw);
+    float2 out_a = a_a + t_a; // output at index n
+    // but Stockham alternates +/-. To get correct output ordering using this form, we write:
+    OutputA[n_m] = out_a;
+
+    // Compute with twiddle for B
+    float2 a_b = InputB[i1_m_uv];
+    float2 b_b = InputB[i2_m_uv];
+    float2 t_b = ComplexMult(b_b, tw);
+    OutputB[n_m] = a_b + t_b;
+
+    // Compute with twiddle for C
+    float2 a_c = InputC[i1_m_uv];
+    float2 b_c = InputC[i2_m_uv];
+    float2 t_c = ComplexMult(b_c, tw);
+    OutputC[n_m] = a_c + t_c;
+}
+
+[numthreads(8,8,1)]
+void FFT_Vertical (uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= N || id.y >= N) return;
+
+    uint n = id.x;
+    uint m = id.y;
+
+    uint step = 1 << stage;
+    uint jump = step << 1;
+    uint group = m / jump;
+    uint pair_index = m % step;
+
+    uint j1 = group * jump + pair_index;
+    uint j2 = j1 + step;
+
+    int2 n_m = int2(n, m);
+    int2 n_j1_uv = int2(n, j1);
+    int2 n_j2_uv = int2(n, j2);
+    
+    float2 tw = TwiddleTex.Load(int3(pair_index, stage, 0));
+    if (direction == -1) tw.y = -tw.y;
+
+    float2 a_a = InputA[n_j1_uv];
+    float2 b_a = InputA[n_j2_uv];
+    float2 t_a = ComplexMult(b_a, tw);
+    OutputA[n_m] = a_a + t_a;
+
+    float2 a_b = InputB[n_j1_uv];
+    float2 b_b = InputB[n_j2_uv];
+    float2 t_b = ComplexMult(b_b, tw);
+    OutputB[n_m] = a_b + t_b;
+
+    float2 a_c = InputC[n_j1_uv];
+    float2 b_c = InputC[n_j2_uv];
+    float2 t_c = ComplexMult(b_c, tw);
+    OutputC[n_m] = a_c + t_c;
+}

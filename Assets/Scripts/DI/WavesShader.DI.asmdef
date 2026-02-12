@@ -1,0 +1,19 @@
+{
+    "name": "WavesShader.DI",
+    "rootNamespace": "WavesShader.DI",
+    "references": [
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:dca3ed0a2cab55b4187fb038eb712346",
+        "GUID:03c893a1d89146243afb585870efae2a",
+        "GUID:4307f53044263cf4b835bd812fc161a4"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

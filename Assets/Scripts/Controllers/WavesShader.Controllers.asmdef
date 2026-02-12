@@ -1,0 +1,19 @@
+{
+    "name": "WavesShader.Controllers",
+    "rootNamespace": "WavesShader.Controllers",
+    "references": [
+        "GUID:4307f53044263cf4b835bd812fc161a4",
+        "GUID:bbf99e84a2624b54e86b600d2081e342",
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:03c893a1d89146243afb585870efae2a"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
